@@ -46,7 +46,18 @@ class CacheHandler(BaseConnectionHandler):
 
 caches = CacheHandler()
 
-cache = ConnectionProxy(caches, DEFAULT_CACHE_ALIAS)
+try:
+    if ('test' in sys.argv or 'testserver' in sys.argv) and settings.USE_FAKEREDIS_IN_TESTS:
+        try:
+            import fakeredis
+        except ModuleNotFoundError as e:
+            raise ModuleNotFoundError(e)
+
+        cache = fakeredis.FakeStrictRedis()
+    else:
+        cache = ConnectionProxy(caches, DEFAULT_CACHE_ALIAS)
+except Exception:
+    cache = ConnectionProxy(caches, DEFAULT_CACHE_ALIAS)
 
 
 def close_caches(**kwargs):
